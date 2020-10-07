@@ -2,3 +2,4 @@
 *.ui
 *.db
 !empty.db
+/__pycache__/*.*

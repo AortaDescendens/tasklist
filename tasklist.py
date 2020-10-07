@@ -11,6 +11,7 @@ from datetime import *
 from time import strftime, time, sleep
 
 import MainWindow
+import NewTaskWindow
 
 #MainWindow
 #NewTask
@@ -21,13 +22,14 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
-		self.AddTask.clicked.connect(self.add_task)
-		self.ActualTasks.clicked.connect(self.view_actual)
-		self.CompletedTasks.clicked.connect(self.view_complited)
+		self.AddTask.triggered.connect(self.add_task)
+		self.ActualTasks.triggered.connect(self.view_actual)
+		self.CompletedTasks.triggered.connect(self.view_complited)
 		self.MainTable.itemDoubleClicked.connect(self.open_info)
 	
 	def add_task(self):
-		pass
+		self.new_task = NewTask()
+		self.new_task.show()
 	
 	def view_actual(self):
 		pass
@@ -46,6 +48,7 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
+
 
 class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow):
 	def __init__(srlf):
