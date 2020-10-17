@@ -69,6 +69,7 @@ class Ui_NewTaskWindow(object):
         self.gridLayout.addWidget(self.label_6, 2, 0, 1, 3)
         self.select_main_task = QtWidgets.QComboBox(self.centralwidget)
         self.select_main_task.setObjectName("select_main_task")
+        self.select_main_task.addItem("")
         self.gridLayout.addWidget(self.select_main_task, 3, 0, 1, 3)
         self.gridLayout_2.addLayout(self.gridLayout, 6, 0, 1, 1)
         spacerItem2 = QtWidgets.QSpacerItem(20, 64, QtWidgets.QSizePolicy.Minimum, QtWidgets.QSizePolicy.Fixed)
@@ -102,3 +103,4 @@ class Ui_NewTaskWindow(object):
         self.select_urgency.setItemText(1, _translate("NewTaskWindow", "Низкая"))
         self.label_3.setText(_translate("NewTaskWindow", "Закончить до"))
         self.label_6.setText(_translate("NewTaskWindow", "Подзадача для"))
+        self.select_main_task.setItemText(0, _translate("NewTaskWindow", "Не является подзадачей"))
