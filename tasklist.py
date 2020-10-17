@@ -6,6 +6,7 @@ import os
 import re
 import shutil
 import sqlite3
+import random
 
 from datetime import *
 from time import strftime, time, sleep
@@ -31,21 +32,10 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 		self.MainTable.itemDoubleClicked.connect(self.open_info)
 
 	def preload(self):
-#		global input_caps
-#		global input_small
-#		global out
-#		rows = len(cache)
 		self.MainTable.setColumnCount(6)
 		self.MainTable.setRowCount(1)
 		headers = ['ID', 'Создана', 'Дедлайн', 'Важность', 'Срочность', 'Название']
 		self.MainTable.setHorizontalHeaderLabels(headers)
-#		for i in range(rows):
-#			for j in range(0, 9):
-#				cell = QtWidgets.QTableWidgetItem()
-#				cell.setText(cache[i][j])
-#				cell.setFlags(QtCore.Qt.ItemIsEnabled)
-#				self.MainTable.setItem(i, j, cell)
-#Ширина столбцов
 		header = self.MainTable.horizontalHeader()
 		header.resizeSection(0, 10)
 		header.resizeSection(1, 90)
@@ -53,19 +43,11 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 		header.resizeSection(3, 80)
 		header.resizeSection(4, 80)
 		header.setSectionResizeMode(5, QtWidgets.QHeaderView.Stretch)
-#		header.resizeSection(6, 120)
-#		header.resizeSection(7, 200)
-#		header.setSectionResizeMode(8, QtWidgets.QHeaderView.Stretch)
 
 	def load_data(self, mode):
+		self.MainTable.setRowCount(0)
 		db_connector = sqlite3.connect(database)
 		cursor = db_connector.cursor()
-#		if mode = 0:
-#			query = 'SELECT * FROM tasks WHERE is_done = (?)'
-#			pass
-#
-#		if mode = 1:
-#			pass
 		query = 'SELECT ID, created, deadline, importance, urgency, name FROM tasks WHERE is_done = (?)'
 		cursor.execute(query,(mode,))
 		result = cursor.fetchall()
@@ -79,6 +61,7 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 					cell.setFlags(QtCore.Qt.ItemIsEnabled)
 					self.MainTable.setItem(i, j, cell)
 		else:
+			self.MainTable.setRowCount(1)
 			for i in range(6):
 				cell = QtWidgets.QTableWidgetItem()
 				cell.setText('Empty DB')
@@ -92,11 +75,9 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 	
 	def view_actual(self):
 		self.load_data(0)
-#		pass
 	
 	def view_complited(self):
 		self.load_data(1)
-#		pass
 	
 	def open_info(self):
 		global id
@@ -113,14 +94,6 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 		self.cache()
 		self.buttons.accepted.connect(self.add_task)
 		self.buttons.rejected.connect(self.cancel)
-	
-#	def test(self):
-#		self.task_details.setText('NYAN~')
-#		pass
-		
-#	def test2(self):
-#		self.task_details.setText('MEOW MEOW MEOW')
-#		pass
 	
 	def cache(self):
 		db_connector = sqlite3.connect(database)
@@ -140,23 +113,12 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 		cursor = db_connector.cursor()
 		name = self.task_name.text()
 		if not name:
-			name = 'Без названия (' + str(random(10000)) + ')'
+			name = 'Без названия (' + str(random.randint(1, 10000)) + ')'
 		details = self.task_details.toPlainText()
-		deadline = self.deadline_date.date()
-#		if deadline < today:
-#			deadline = today
-#		importance = str(select_importance.currentText())
-#		if str(self.select_importance.currentText()) == 'Высокая':
-#			importance = 'high'
-#		else:
-#			importance = 'low'
-#		if str(self.select_urgency.currentText()) == 'Высокая':
-#			urgency = 'high'
-#		else:
-#			urgency = 'low'
+		temp = self.deadline_date.date()
+		deadline = str(temp.toPyDate())[8:] + '.' + str(temp.toPyDate())[5:7] + '.' + str(temp.toPyDate())[0:4]
 		importance = self.select_importance.currentText()
 		urgency = self.select_urgency.currentText()
-		
 		if str(self.select_main_task.currentText()) == 'Не является подзадачей':
 			subtask_for = None
 		elif str(self.select_main_task.currentText()) == 'Empty DB':
@@ -166,17 +128,16 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 			cursor.execute('SELECT ID FROM tasks WHERE name = (?)', (main_task,))
 			subtask_for = cursor.fetchall()
 			subtask_for = int(str(subtask_for[0][0]))
-		
 		timer = 0
 		clicks = 0
 		is_done = 0
-		
 		params = (name, details, subtask_for, today, deadline, importance, urgency, timer, clicks, is_done)
 		query = 'INSERT INTO tasks (name, details, subtask_for, created, deadline, importance, urgency, timer, clicks, is_done) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 		cursor.execute(query, params)
 		db_connector.commit()
 		cursor.close()
-#		pass
+		window.load_data(0)
+		self.close()
 		
 	def cancel(self):
 		self.close()
@@ -193,6 +154,7 @@ def main():
 
 	global database
 	global today
+	global window
 	
 	database = r'tasks.db'
 	today = datetime.now().strftime('%d.%m.%Y')
