@@ -75,6 +75,7 @@ class Ui_MainWindow(object):
     def retranslateUi(self, MainWindow):
         _translate = QtCore.QCoreApplication.translate
         MainWindow.setWindowTitle(_translate("MainWindow", "Список задач"))
+        self.MainTable.setSortingEnabled(True)
         self.TasksMenu.setTitle(_translate("MainWindow", "Задачи"))
         self.ViewMenu.setTitle(_translate("MainWindow", "Просмотр"))
         self.AddTask.setText(_translate("MainWindow", "Добавить"))

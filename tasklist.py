@@ -77,8 +77,10 @@ class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 	
 	def open_info(self):
 		global id
-		
-		pass
+		index = self.MainTable.currentItem().row()
+		id = self.MainTable.item(index, 0).text()
+		self.task_details = TaskDetails()
+		self.task_details.show()
 
 
 class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
@@ -150,10 +152,91 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 
 
 class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow):
-	def __init__(srlf):
+	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
+		self.load_data()
+		self.close_task_button.clicked.connect(self.close_task)
+		self.click_button.clicked.connect(self.clicker)
+		self.start_pause_button.clicked.connect(self.timer)
+		self.null_button.clicked.connect(self.null_timer)
+	
+	def load_data(self):
+		db_connector = sqlite3.connect(database)
+		cursor = db_connector.cursor()
+		query = 'SELECT * FROM tasks WHERE ID = (?)'
+		cursor.execute(query,(id,))
+		result = cursor.fetchall()[0]
+		self.task_name.setText(result[1])
+		if result[3] == 0:
+			if result[2]:
+				details_text = result[2] + '\n\n' + 'Создана: ' + result[4] + '\n' + 'Дедлайн: ' + result[5] + '\n' + 'Важность: ' + result[6] + '\n' + 'Срочность: ' + result[7]
+			else:
+				details_text = 'Нет описания\n\n' + 'Создана: ' + result[4] + '\n' + 'Дедлайн: ' + result[5] + '\n' + 'Важность: ' + result[6] + '\n' + 'Срочность: ' + result[7]
+			cursor.execute('SELECT id, name, is_done FROM tasks WHERE subtask_for = (?)', (result[0],))
+			subtasks = cursor.fetchall()
+			if subtasks:
+				details_text = details_text + '\n\nПодзадачи:\n'
+				for i in range(len(subtasks)):
+					details_text = details_text + '\t' + str(subtasks[i][0]) + '. ' + subtasks[i][1]
+					if subtasks[i][2] == 1:
+						details_text = details_text + ' - завершена\n'
+					else:
+						details_text = details_text + '\n'
+		else:
+			if result[2]:
+				details_text = result[2] + '\n\n' + 'Создана: ' + result[4] + '\n' + 'Дедлайн: ' + result[5] + '\n' + 'Важность: ' + result[6] + '\n' + 'Срочность: ' + result[7]
+			else:
+				details_text = 'Нет описания\n\n' + 'Создана: ' + result[4] + '\n' + 'Дедлайн: ' + result[5] + '\n' + 'Важность: ' + result[6] + '\n' + 'Срочность: ' + result[7]
+			cursor.execute('SELECT name FROM tasks WHERE ID = (?)', (result[3],))
+			maintask = cursor.fetchall()[0]
+			details_text = details_text + '\n\nПодзадача для:\n' + '\t' + str(result[3]) + '. ' + str(maintask[0])
+		self.task_details.setText(details_text)
+		self.timer_label.setText(str(result[8]))
+		self.clicks_label.setText(str(result[9]))
+		cursor.close()
+		if result[10] == 1:
+			self.close_task_button.setEnabled(False)
+			self.click_button.setEnabled(False)
+			self.start_pause_button.setEnabled(False)
+			self.null_button.setEnabled(False)
 
+	def clicker(self):
+		db_connector = sqlite3.connect(database)
+		cursor = db_connector.cursor()
+		query = 'SELECT clicks FROM tasks WHERE ID = (?)'
+		cursor.execute(query,(id,))
+		clicks = cursor.fetchall()[0][0]
+		clicks += 1
+		self.clicks_label.setText(str(clicks))
+		cursor.execute('UPDATE tasks SET clicks = (?) WHERE ID = (?)',(clicks, id))
+		db_connector.commit()
+		cursor.close()
+		
+	def timer(self):
+		pass
+	
+	def null_timer(self):
+		pass
+	
+	def close_task(self):
+		db_connector = sqlite3.connect(database)
+		cursor = db_connector.cursor()
+		cursor.execute('SELECT name FROM tasks WHERE ID = (?)', (id,))
+		name = str(cursor.fetchall()[0][0])
+		name += ' | Выполнено'
+		cursor.execute('SELECT id, name FROM tasks WHERE subtask_for = (?)', (id,))
+		subtasks = cursor.fetchall()
+		query = 'UPDATE tasks SET name = (?), is_done = (?) WHERE ID = (?)'
+		cursor.execute(query,(name, 1, id))
+		if subtasks:
+			for i in range(len(subtasks)):
+				new_name = str(subtasks[i][1]) + ' | Выполнено'
+				cursor.execute(query,(new_name, 1, subtasks[i][0]))
+		db_connector.commit()
+		cursor.close()
+		window.load_data(0)
+		self.close()
 
 
 def main():

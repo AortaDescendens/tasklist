@@ -3,3 +3,5 @@
 *.db
 !empty.db
 /__pycache__/*.*
+/build/*
+setup.py
