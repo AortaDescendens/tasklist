@@ -15,10 +15,6 @@ import MainWindow
 import NewTaskWindow
 import TaskDetailsWindow
 
-#MainWindow
-#NewTask
-#TaskDetails
-#CompletedTasks
 
 class Application(QtWidgets.QMainWindow, MainWindow.Ui_MainWindow):
 	def __init__(self):
@@ -98,7 +94,7 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 	def cache(self):
 		db_connector = sqlite3.connect(database)
 		cursor = db_connector.cursor()
-		query = 'SELECT name FROM (SELECT * FROM tasks WHERE is_done = 0) WHERE subtask_for = NULL'
+		cursor.execute('SELECT name FROM (SELECT * FROM tasks WHERE is_done = 0) WHERE subtask_for = 0')
 		cached = cursor.fetchall()
 		cursor.close()
 		if cached:
@@ -117,12 +113,19 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 		details = self.task_details.toPlainText()
 		temp = self.deadline_date.date()
 		deadline = str(temp.toPyDate())[8:] + '.' + str(temp.toPyDate())[5:7] + '.' + str(temp.toPyDate())[0:4]
+		current_deadline = date(int(deadline.split('.')[2]), int(deadline.split('.')[1]), int(deadline.split('.')[0]))
+		diff = current_date - current_deadline
+		try:
+			if int(str(diff).split(' ')[0]) > 0:
+				deadline = today
+		except ValueError:
+			pass
 		importance = self.select_importance.currentText()
 		urgency = self.select_urgency.currentText()
 		if str(self.select_main_task.currentText()) == 'Не является подзадачей':
-			subtask_for = None
+			subtask_for = 0
 		elif str(self.select_main_task.currentText()) == 'Empty DB':
-			subtask_for = None
+			subtask_for = 0
 		else:
 			main_task = str(self.select_main_task.currentText())
 			cursor.execute('SELECT ID FROM tasks WHERE name = (?)', (main_task,))
@@ -130,7 +133,10 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 			subtask_for = int(str(subtask_for[0][0]))
 		timer = 0
 		clicks = 0
-		is_done = 0
+		if (importance == 'Низкая') and (urgency == 'Низкая'):
+			is_done = 1
+		else:
+			is_done = 0
 		params = (name, details, subtask_for, today, deadline, importance, urgency, timer, clicks, is_done)
 		query = 'INSERT INTO tasks (name, details, subtask_for, created, deadline, importance, urgency, timer, clicks, is_done) values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)'
 		cursor.execute(query, params)
@@ -155,9 +161,28 @@ def main():
 	global database
 	global today
 	global window
+	global current_date
 	
 	database = r'tasks.db'
 	today = datetime.now().strftime('%d.%m.%Y')
+	current_date = today.split('.')
+	current_date = date(int(current_date[2]), int(current_date[1]), int(current_date[0]))
+
+	db_connector = sqlite3.connect(database)
+	cursor = db_connector.cursor()
+	cursor.execute('SELECT ID, deadline FROM tasks')
+	result = cursor.fetchall()
+	for i in range(len(result)):
+		temp = result[i][1].split('.')
+		current_deadline = date(int(temp[2]), int(temp[1]), int(temp[0]))
+		diff = current_date - current_deadline
+		try:
+			if int(str(diff).split(' ')[0]) > 0:
+				cursor.execute('UPDATE tasks SET deadline = (?) WHERE ID = (?)', (today, result[i][0]))
+				db_connector.commit()
+		except ValueError:
+			pass
+	cursor.close()
 	
 	app = QtWidgets.QApplication(sys.argv)
 	window = Application()
