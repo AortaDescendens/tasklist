@@ -20,7 +20,7 @@ class Ui_MainWindow(object):
         sizePolicy.setVerticalStretch(0)
         sizePolicy.setHeightForWidth(MainWindow.sizePolicy().hasHeightForWidth())
         MainWindow.setSizePolicy(sizePolicy)
-        MainWindow.setMinimumSize(QtCore.QSize(800, 600))
+        MainWindow.setMinimumSize(QtCore.QSize(400, 300))
         MainWindow.setMaximumSize(QtCore.QSize(1920, 1080))
         font = QtGui.QFont()
         font.setPointSize(10)

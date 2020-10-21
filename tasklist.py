@@ -9,7 +9,7 @@ import sqlite3
 import random
 
 from datetime import *
-from time import strftime, time, sleep
+from time import strftime, time, sleep, gmtime
 
 import MainWindow
 import NewTaskWindow
@@ -96,12 +96,12 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 	def cache(self):
 		db_connector = sqlite3.connect(database)
 		cursor = db_connector.cursor()
-		cursor.execute('SELECT name FROM (SELECT * FROM tasks WHERE is_done = 0) WHERE subtask_for = 0')
+		cursor.execute('SELECT id, name FROM (SELECT * FROM tasks WHERE is_done = 0) WHERE subtask_for = 0')
 		cached = cursor.fetchall()
 		cursor.close()
 		if cached:
 			for i in range(len(cached)):
-				self.select_main_task.addItem(cached[i][0])
+				self.select_main_task.addItem(str(cached[i][0]) + '. ' + cached[i][1])
 		else:
 			self.select_main_task.addItem('Empty DB')
 	
@@ -129,10 +129,8 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 		elif str(self.select_main_task.currentText()) == 'Empty DB':
 			subtask_for = 0
 		else:
-			main_task = str(self.select_main_task.currentText())
-			cursor.execute('SELECT ID FROM tasks WHERE name = (?)', (main_task,))
-			subtask_for = cursor.fetchall()
-			subtask_for = int(str(subtask_for[0][0]))
+			main_task = str(self.select_main_task.currentText()).split('. ')
+			subtask_for = int(str(main_task[0]))
 		timer = 0
 		clicks = 0
 		if (importance == 'Низкая') and (urgency == 'Низкая'):
@@ -152,9 +150,11 @@ class NewTask(QtWidgets.QMainWindow, NewTaskWindow.Ui_NewTaskWindow):
 
 
 class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow):
+	
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
+		timer_exec = False
 		self.load_data()
 		self.close_task_button.clicked.connect(self.close_task)
 		self.click_button.clicked.connect(self.clicker)
@@ -162,6 +162,7 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 		self.null_button.clicked.connect(self.null_timer)
 	
 	def load_data(self):
+#		timer_exec = False
 		db_connector = sqlite3.connect(database)
 		cursor = db_connector.cursor()
 		query = 'SELECT * FROM tasks WHERE ID = (?)'
@@ -192,7 +193,7 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 			maintask = cursor.fetchall()[0]
 			details_text = details_text + '\n\nПодзадача для:\n' + '\t' + str(result[3]) + '. ' + str(maintask[0])
 		self.task_details.setText(details_text)
-		self.timer_label.setText(str(result[8]))
+		self.timer_label.setText(strftime("%H:%M:%S", gmtime(result[8])))
 		self.clicks_label.setText(str(result[9]))
 		cursor.close()
 		if result[10] == 1:
@@ -213,7 +214,26 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 		db_connector.commit()
 		cursor.close()
 		
-	def timer(self):
+	def timer(self, timer_exec):
+#		print(timer_exec)
+#		timer_exec = not timer_exec
+#		if timer_exec == True:
+#			print(timer_exec)
+#			self.start_pause_button.setText('Стоп')
+#			print('button')
+#			db_connector = sqlite3.connect(database)
+#			cursor = db_connector.cursor()
+#			query = 'SELECT timer FROM tasks WHERE ID = (?)'
+#			cursor.execute(query,(id,))
+#			result = cursor.fetchall()
+#			sec = int(cursor.fetchall()[0][0])
+#			print(result)
+#			sec = int(result[0][0])
+#			print(sec)
+#			while timer_exec:
+#				self.clicks_label.setText(str(strftime("%H:%M:%S", gmtime(sec))))
+#				sec += 1
+#				sleep(1)
 		pass
 	
 	def null_timer(self):

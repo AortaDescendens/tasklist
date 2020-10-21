@@ -15,7 +15,7 @@ class Ui_NewTaskWindow(object):
     def setupUi(self, NewTaskWindow):
         NewTaskWindow.setObjectName("NewTaskWindow")
         NewTaskWindow.resize(600, 850)
-        NewTaskWindow.setMinimumSize(QtCore.QSize(400, 600))
+        NewTaskWindow.setMinimumSize(QtCore.QSize(150, 300))
         NewTaskWindow.setMaximumSize(QtCore.QSize(1920, 1080))
         font = QtGui.QFont()
         font.setPointSize(10)

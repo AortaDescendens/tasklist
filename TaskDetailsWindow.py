@@ -15,7 +15,7 @@ class Ui_TaskDetailsWindow(object):
     def setupUi(self, TaskDetailsWindow):
         TaskDetailsWindow.setObjectName("TaskDetailsWindow")
         TaskDetailsWindow.resize(800, 450)
-        TaskDetailsWindow.setMinimumSize(QtCore.QSize(800, 400))
+        TaskDetailsWindow.setMinimumSize(QtCore.QSize(400, 200))
         TaskDetailsWindow.setMaximumSize(QtCore.QSize(1920, 1080))
         font = QtGui.QFont()
         font.setPointSize(10)
