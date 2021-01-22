@@ -154,7 +154,6 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 	def __init__(self):
 		super().__init__()
 		self.setupUi(self)
-		timer_exec = False
 		self.load_data()
 		self.close_task_button.clicked.connect(self.close_task)
 		self.click_button.clicked.connect(self.clicker)
@@ -162,7 +161,6 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 		self.null_button.clicked.connect(self.null_timer)
 	
 	def load_data(self):
-#		timer_exec = False
 		db_connector = sqlite3.connect(database)
 		cursor = db_connector.cursor()
 		query = 'SELECT * FROM tasks WHERE ID = (?)'
@@ -214,30 +212,35 @@ class TaskDetails(QtWidgets.QMainWindow, TaskDetailsWindow.Ui_TaskDetailsWindow)
 		db_connector.commit()
 		cursor.close()
 		
-	def timer(self, timer_exec):
-#		print(timer_exec)
-#		timer_exec = not timer_exec
-#		if timer_exec == True:
-#			print(timer_exec)
-#			self.start_pause_button.setText('Стоп')
-#			print('button')
-#			db_connector = sqlite3.connect(database)
-#			cursor = db_connector.cursor()
-#			query = 'SELECT timer FROM tasks WHERE ID = (?)'
-#			cursor.execute(query,(id,))
-#			result = cursor.fetchall()
-#			sec = int(cursor.fetchall()[0][0])
-#			print(result)
-#			sec = int(result[0][0])
-#			print(sec)
-#			while timer_exec:
-#				self.clicks_label.setText(str(strftime("%H:%M:%S", gmtime(sec))))
-#				sec += 1
-#				sleep(1)
-		pass
+	def timer(self):
+		db_connector = sqlite3.connect(database)
+		cursor = db_connector.cursor()
+		query = 'SELECT timer FROM tasks WHERE ID = (?)'
+		cursor.execute(query,(id,))
+		result = cursor.fetchall()
+		sec = int(result[0][0])
+		self.timer_label.setText(str(strftime("%H:%M:%S", gmtime(sec))))
+		current = self.start_pause_button.text()
+		if current == 'Старт':
+			self.start_pause_button.setText('Стоп')
+			global start_time
+			start_time = time()
+		else:
+			self.start_pause_button.setText('Старт')
+			end_time = time()
+			sec = sec + int(end_time - start_time)
+			self.timer_label.setText(str(strftime("%H:%M:%S", gmtime(sec))))
+			cursor.execute('UPDATE tasks SET timer = (?) WHERE ID = (?)', (sec, id))
+			db_connector.commit()
+			cursor.close()
 	
 	def null_timer(self):
-		pass
+		db_connector = sqlite3.connect(database)
+		cursor = db_connector.cursor()
+		cursor.execute('UPDATE tasks SET timer = (?) WHERE ID = (?)', (0, id))
+		db_connector.commit()
+		cursor.close()
+		self.timer_label.setText(str(strftime("%H:%M:%S", gmtime(0))))
 	
 	def close_task(self):
 		db_connector = sqlite3.connect(database)
@@ -286,6 +289,7 @@ def main():
 		except ValueError:
 			pass
 	cursor.close()
+	db_connector.close()
 	
 	app = QtWidgets.QApplication(sys.argv)
 	window = Application()
